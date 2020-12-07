@@ -93,7 +93,7 @@ int main(int, char **)
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit())
         return 1;
-    GLFWwindow *window = glfwCreateWindow(1280, 720, "Dear ImGui GLFW+OpenGL2 example", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(1280, 720, "Client Example", NULL, NULL);
     if (window == NULL)
         return 1;
     glfwMakeContextCurrent(window);
@@ -139,7 +139,9 @@ int main(int, char **)
     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
-    //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
+    ImFont* font = io.Fonts->AddFontFromFileTTF("./imgui/font/Roboto-Medium.ttf", 16.0f);
+    if (font == NULL)
+        io.Fonts->AddFontDefault();
     //IM_ASSERT(font != NULL);
 
     // Our state
@@ -174,7 +176,7 @@ int main(int, char **)
 
         // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
         {
-            static int port = 8080;
+            static int port = 12376;
             static char ipaddr[16] = "127.0.0.1";
             auto flag = ImGuiInputTextFlags_ReadOnly;
             if (!conn_rdy)
@@ -183,7 +185,7 @@ int main(int, char **)
             ImGui::Begin("Connection Manager"); // Create a window called "Hello, world!" and append into it.
 
             ImGui::InputText("IP Address", ipaddr, sizeof(ipaddr), flag);
-            ImGui::InputInt("Port", &port, sizeof(port), flag);
+            ImGui::InputInt("Port", &port, 0, 0, flag);
 
             if (!conn_rdy || sock < 0)
             {
