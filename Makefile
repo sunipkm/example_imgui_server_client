@@ -17,7 +17,7 @@ endif
 UNAME_S := $(shell uname -s)
 
 CXXFLAGS:= -I include/ -I imgui/include/imgui -I imgui/include/backend -I ./ -Wall -O2 -fpermissive -std=gnu++11
-LIBS = 
+LIBS = -lpthread
 
 ifeq ($(UNAME_S), Linux) #LINUX
 	ECHO_MESSAGE = "Linux"
@@ -55,7 +55,7 @@ all: $(GUITARGET) $(CTARGET) imgui/libimgui_glfw.a
 	$(ECHO) "Built for $(UNAME_S), execute ./$(GUITARGET)"
 
 $(GUITARGET): $(CPPOBJS) imgui/libimgui_glfw.a
-	$(CXX) $(CXXFLAGS) imgui/libimgui_glfw.a -o $@ $(CPPOBJS) $(LIBS)
+	$(CXX) $(CXXFLAGS) -o $@ $(CPPOBJS) imgui/libimgui_glfw.a $(LIBS)
 
 $(CTARGET): $(COBJS) 
 	$(CC) $(EDCFLAGS) -o $@ $(COBJS) $(EDLDFLAGS)
