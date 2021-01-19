@@ -9,6 +9,11 @@
 #include <pthread.h>
 #include <fcntl.h>
 #include <assert.h>
+#include <unistd.h>
+
+#ifndef SO_REUSEPORT
+#define SO_REUSEPORT 15
+#endif
 
 #define eprintf(...) fprintf(stderr, __VA_ARGS__);
 
