@@ -111,15 +111,18 @@ int main(int argc, char const *argv[])
 
     while (!done)
     {
-        snprintf(hello, 1024, "Hello from server, counter %d", ++counter);
-        int sz = send(new_socket, hello, strlen(hello), MSG_NOSIGNAL);
+        int sz = snprintf(hello + 1, 1023, "Hello from server, counter %d", ++counter);
+        hello[0] = sz;
+        sz = send(new_socket, hello, strlen(hello), MSG_NOSIGNAL);
         // eprintf("%s: Sent %d bytes: %s", __func__, sz, hello);
         if (sz < 0 && !done)
         {
             if ((new_socket = accept(server_fd, (struct sockaddr *)&address,
                                      (socklen_t *)&addrlen)) < 0)
             {
+#ifdef SERVER_DEBUG
                 perror("accept");
+#endif
             }
         }
         usleep(1000000 / 30); // 60 Hz

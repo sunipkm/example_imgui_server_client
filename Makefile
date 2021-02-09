@@ -6,7 +6,7 @@ PWD=$(shell pwd)
 CDR=$(shell pwd)
 ECHO=echo
 
-EDCFLAGS:=$(CFLAGS) -I include/ -Wall -fpermissive -std=c11
+EDCFLAGS:=$(CFLAGS) -I include/ -Wall -std=gnu11
 EDLDFLAGS:=$(LDFLAGS) -lpthread -lm
 EDDEBUG:=$(DEBUG)
 
@@ -16,7 +16,7 @@ endif
 
 UNAME_S := $(shell uname -s)
 
-CXXFLAGS:= -I include/ -I imgui/include/imgui -I imgui/include/backend -I ./ -Wall -O2 -fpermissive -std=gnu++11
+CXXFLAGS:= -I include/ -I imgui/include -Wall -O2 -fpermissive -std=gnu++11
 LIBS = -lpthread
 
 ifeq ($(UNAME_S), Linux) #LINUX

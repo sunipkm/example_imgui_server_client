@@ -23,9 +23,9 @@ void sighandler(int sig)
     done = 1;
 }
 
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl2.h"
+#include "imgui/imgui.h"
+#include "backend/imgui_impl_glfw.h"
+#include "backend/imgui_impl_opengl2.h"
 #include <stdio.h>
 #ifdef __APPLE__
 #define GL_SILENCE_DEPRECATION
@@ -54,10 +54,13 @@ void *rcv_thr(void *sock)
     {
         if (conn_rdy)
         {
-            int sz = read(*(int *)sock, rcv_buf, sizeof(rcv_buf));
+            char msg_sz = 0;
+            int sz = read(*(int *)sock, &msg_sz, 1);
+            if (sz > 0)
+                sz = recv(*(int *)sock, rcv_buf, msg_sz, MSG_WAITALL);
             fprintf(stderr, "%s: Received %d bytes, %s\n", __func__, sz, rcv_buf);
         }
-        usleep(1000 * 1000 / 30); // receive only at 30 Hz
+        usleep(1000 * 1000 / 60); // receive only at 30 Hz
     }
     return NULL;
 }
@@ -224,8 +227,10 @@ int main(int, char **)
         }
         if (conn_rdy && sock > 0)
         {
-            static char msg[] = "Hello from client!\n";
-            send(sock, msg, sizeof(msg), 0);
+            static char msg[1024];
+            static int ctr = 0;
+            int sz = snprintf(msg, 1024, "Hello from client: %d!\n", ++ctr);
+            send(sock, msg, sz, 0);
         }
 
         // Rendering
