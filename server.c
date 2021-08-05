@@ -29,16 +29,20 @@ void sig_handler(int in)
 void *rcv_fcn(void *sock)
 {
     char buffer[1024] = {0};
+    static int pollctr = 0;
     while (!done)
     {
         if (*(int *)sock > 0)
         {
             struct pollfd pfd = {.fd = *(int *)sock, .events = POLLIN};
             int ret;
-            if ((ret = poll(&pfd, 1, 7)) > 0) // error or timeout
+            pollctr++;
+            if (((ret = poll(&pfd, 1, 7)) > 0)) // error or timeout
             {
                 int sz = recv(*(int *)sock, buffer, sizeof(buffer), MSG_NOSIGNAL);
-                eprintf("%s: Received %d bytes: %s\n", __func__, sz, buffer);
+                if (sz == 0)
+                    goto sleep;
+                eprintf("%s: Poll %d, Received %d bytes: %s\n", __func__, pollctr, sz, buffer);
                 memset(buffer, 0x0, 1024);
             }
             else
@@ -46,7 +50,9 @@ void *rcv_fcn(void *sock)
                 printf("Receive poll: %d\n", ret);
             }
         }
-        // usleep(1000000 / 120); // receive at 120 Hz
+        else
+sleep:
+            usleep(1000000 / 120); // receive at 120 Hz
     }
     return NULL;
 }
@@ -124,8 +130,6 @@ int main(int argc, char const *argv[])
         if (new_socket < 0)
         {
             new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t *)&addrlen);
-            if (new_socket < 0)
-                perror(accept);
         }
         else
         {
