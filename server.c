@@ -10,6 +10,7 @@
 #include <fcntl.h>
 #include <assert.h>
 #include <unistd.h>
+#include <poll.h>
 
 #ifndef SO_REUSEPORT
 #define SO_REUSEPORT 15
@@ -32,11 +33,20 @@ void *rcv_fcn(void *sock)
     {
         if (*(int *)sock > 0)
         {
-            int sz = recv(*(int *)sock, buffer, sizeof(buffer), MSG_NOSIGNAL);
-            eprintf("%s: Received %d bytes: %s\n", __func__, sz, buffer);
-            memset(buffer, 0x0, 1024);
+            struct pollfd pfd = {.fd = *(int *)sock, .events = POLLIN};
+            int ret;
+            if ((ret = poll(&pfd, 1, 7)) > 0) // error or timeout
+            {
+                int sz = recv(*(int *)sock, buffer, sizeof(buffer), MSG_NOSIGNAL);
+                eprintf("%s: Received %d bytes: %s\n", __func__, sz, buffer);
+                memset(buffer, 0x0, 1024);
+            }
+            else
+            {
+                printf("Receive poll: %d\n", ret);
+            }
         }
-        usleep(1000000 / 120); // receive at 120 Hz
+        // usleep(1000000 / 120); // receive at 120 Hz
     }
     return NULL;
 }
@@ -47,7 +57,7 @@ int main(int argc, char const *argv[])
     struct sockaddr_in address;
     int opt = 1;
     int addrlen = sizeof(address);
-    char hello[1024];
+    char hello[129];
 
     // Creating socket file descriptor
     if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
@@ -89,7 +99,7 @@ int main(int argc, char const *argv[])
         perror("bind failed");
         exit(EXIT_FAILURE);
     }
-    if (listen(server_fd, 3) < 0)
+    if (listen(server_fd, 1) < 0)
     {
         perror("listen");
         exit(EXIT_FAILURE);
@@ -111,18 +121,21 @@ int main(int argc, char const *argv[])
 
     while (!done)
     {
-        int sz = snprintf(hello + 1, 1023, "Hello from server, counter %d", ++counter);
-        hello[0] = sz;
-        sz = send(new_socket, hello, strlen(hello), MSG_NOSIGNAL);
-        // eprintf("%s: Sent %d bytes: %s", __func__, sz, hello);
-        if (sz < 0 && !done)
+        if (new_socket < 0)
         {
-            if ((new_socket = accept(server_fd, (struct sockaddr *)&address,
-                                     (socklen_t *)&addrlen)) < 0)
+            new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t *)&addrlen);
+            if (new_socket < 0)
+                perror(accept);
+        }
+        else
+        {
+            int sz = snprintf(hello + 1, sizeof(hello) - 1, "Hello from server, counter %d", ++counter);
+            hello[0] = sz;
+            sz = send(new_socket, hello, strlen(hello), MSG_NOSIGNAL);
+            if (sz < 0)
             {
-#ifdef SERVER_DEBUG
-                perror("accept");
-#endif
+                close(new_socket);
+                new_socket = -1;
             }
         }
         usleep(1000000 / 30); // 60 Hz
